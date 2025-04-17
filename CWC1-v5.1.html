@@ -1,0 +1,154 @@
+﻿<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <title>入机验证</title>
+        <style>
+            body {
+                background-color: #f2f2f2;
+                font-family: Arial, sans-serif;
+                font-size: 16px;
+                line-height: 1.5;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .container {
+                margin: 10px;
+                width: 80%;
+                max-width: 800px;
+                padding: 5px 25px 25px;
+                background-color: #fff;
+                box-shadow: 0 0 10px rgba(0,0,0,0.1);
+                border-radius: 10px;
+                transition: transform 0.3s;
+            }
+            .container:hover {
+                transform: scale(1.02);
+                box-shadow: 0 0 15px rgba(0,0,0,0.2);
+            }
+
+            button {
+                height: auto;
+                width: 45px;
+                padding: 5px 10px;
+                border: none;
+                border-radius: 4px;
+                background-color: #007bff;
+                color: white;
+                font-size: 16px;
+                cursor: pointer;
+                transition: background-color 0.3s;
+            }
+            button:hover {
+                background-color: #0056b3;
+            }
+            button:disabled {
+                background-color: #007bff6e;
+                cursor: not-allowed;
+            }
+
+            .messageBox {
+                width: 80%;
+                border: 2px solid #333;
+                padding: 5px 20px;
+                border-radius: 5px;
+            }
+
+            buttons {
+                user-select: none;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <h1>入机验证</h1>
+            <p>
+                请从左到右依次点击每个按钮以进行验证, 点击 
+                <button onclick="reset()" style="width: 60px;">此处</button> 
+                以重置。
+            </p>
+            <p id="buttons"></p>
+            <p>消息: </p>
+            <div class="messageBox">
+                <p id="message">这是一条默认消息</p>
+            </div>
+        </div>
+        <script>
+            const N = 16;
+            let clickTime = new Array(N), lastClick = 0, interval = new Array(N - 1), average = 0, variance = 0, maxIvl = 0, minIvl = 5000, range, message;
+            for(let i = 1; i <= 16; i++) {
+                document.getElementById('buttons').innerHTML += '<button id="button' + i + '" onclick="handle(' + i + ')">' + String(i).padStart(2, '0') + '</button>\n';
+            }
+            function reset() {
+                for(let i = 0; i < N; i++) {
+                    clickTime[i] = 0;
+                    document.getElementById('button' + String(i + 1)).disabled = false;
+                }
+                lastClick = 0;
+                average = 0;
+                variance = 0;
+                maxIvl = 0;
+                minIvl = 5000;
+            }
+            function handle(index) {
+                // console.log('click(', index, ')');
+                if(index == 1) {
+                    reset();
+                }
+                if(lastClick + 1 != index) {
+                    return;
+                }
+                lastClick = index;
+                clickTime[index - 1] = new Date().getTime();
+                document.getElementById('button' + index).disabled = true;
+                // console.log(clickTime[index - 1]);
+                if(index == N) {
+                    getResult();
+                }
+            }
+            function getResult() {
+                for(let i = 0; i < N - 1; i++) {
+                    interval[i] = clickTime[i + 1] - clickTime[i];
+                    average += interval[i];
+                    maxIvl = Math.max(maxIvl, interval[i]);
+                    minIvl = Math.min(minIvl, interval[i]);
+                }
+                average = Math.floor(average / (N - 1));
+                range = maxIvl - minIvl;
+                for(let i = 0; i < N - 1; i++) {
+                    variance += (interval[i] - average) * (interval[i] - average);
+                }
+                variance = Math.floor(variance / (N - 1));
+                console.log('Time Intervals:', interval);
+                console.log('Average of Intervals:', average);
+                console.log('Variance of Intervals:', variance);
+                console.log('Range of Intervals:', range);
+                message = '间隔时长(ms): ' + interval + ';<br/>平均间隔时长(ms): ' + average + ';<br/>间隔时长的方差: ' + variance + ';<br/>间隔时长的极差(ms): ' + range + ';<br/>验证结果: ';
+                //作者本人测试的 average 最低 294, varience 最低 657, range 最低 88
+                //但是某 chm 打出了 average=260, varience=270, range=56 的成绩
+                if(average < 200 || variance < 250 || range < 40) {
+                    message += '你个入机';
+                }
+                else {
+                    message += '你看起来像个人类';
+                }
+                showMessage(message);
+            }
+            function showMessage(message) {
+                document.getElementById('message').innerHTML = formatTime() + '<br/>' + message;
+            }
+            function formatTime() {
+                let date = new Date();
+                let year = date.getFullYear();
+                let month = String(date.getMonth() + 1).padStart(2, '0');
+                let day = String(date.getDate()).padStart(2, '0');
+                let hours = String(date.getHours()).padStart(2, '0');
+                let minutes = String(date.getMinutes()).padStart(2, '0');
+                let seconds = String(date.getSeconds()).padStart(2, '0');
+                return year + '.' + month + '.' + day + ' ' + hours + ':' + minutes + ':' + seconds;
+            }
+        </script>
+    </body>
+</html>
