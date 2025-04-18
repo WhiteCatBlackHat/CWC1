@@ -12,6 +12,7 @@
                 display: flex;
                 flex-direction: column;
                 align-items: center;
+                user-select: none;
             }
 
             .container {
@@ -55,10 +56,6 @@
                 padding: 5px 20px;
                 border-radius: 5px;
             }
-
-            buttons {
-                user-select: none;
-            }
         </style>
     </head>
     <body>
@@ -77,7 +74,7 @@
         </div>
         <script>
             const N = 16;
-            let clickTime = new Array(N), lastClick = 0, interval = new Array(N - 1), average = 0, variance = 0, maxIvl = 0, minIvl = 5000, range, message;
+            let clickTime = new Array(N), lastClick = 0, interval = new Array(N - 1), average = 0, average2 = 0, variance = 0, maxIvl = 0, minIvl = 5000, range, message;
             for(let i = 1; i <= 16; i++) {
                 document.getElementById('buttons').innerHTML += '<button id="button' + i + '" onclick="handle(' + i + ')">' + String(i).padStart(2, '0') + '</button>\n';
             }
@@ -88,6 +85,7 @@
                 }
                 lastClick = 0;
                 average = 0;
+                average2 = 0;
                 variance = 0;
                 maxIvl = 0;
                 minIvl = 5000;
@@ -115,21 +113,32 @@
                     maxIvl = Math.max(maxIvl, interval[i]);
                     minIvl = Math.min(minIvl, interval[i]);
                 }
+                average2 = Math.floor( (average - maxIvl - minIvl) / (N - 3) );
                 average = Math.floor(average / (N - 1));
                 range = maxIvl - minIvl;
                 for(let i = 0; i < N - 1; i++) {
                     variance += (interval[i] - average) * (interval[i] - average);
                 }
                 variance = Math.floor(variance / (N - 1));
-                console.log('Time Intervals:', interval);
-                console.log('Average of Intervals:', average);
-                console.log('Variance of Intervals:', variance);
-                console.log('Range of Intervals:', range);
-                message = '间隔时长(ms): ' + interval + ';<br/>平均间隔时长(ms): ' + average + ';<br/>间隔时长的方差: ' + variance + ';<br/>间隔时长的极差(ms): ' + range + ';<br/>验证结果: ';
+                // console.log('Time Intervals:', interval);
+                // console.log('Average of Intervals:', average);
+                // console.log('Variance of Intervals:', variance);
+                // console.log('Range of Intervals:', range);
+                message =
+                '间隔时长(ms): ' + interval +
+                ';<br/>间隔时长的平均值(ms): ' + average +
+                ';<br/>方差(ms²): ' + variance +
+                ';<br/>极差(ms): ' + range +
+                ';<br/>去掉极值后的平均值(ms): ' + average2 +
+                ';<br/>验证结果: ';
                 //作者本人测试的 average 最低 294, varience 最低 657, range 最低 88
                 //但是某 chm 打出了 average=260, varience=270, range=56 的成绩
-                if(average < 200 || variance < 250 || range < 40) {
-                    message += '你个入机';
+                //但是某 zmh 打出了 average=114, varience=61, range=23 的成绩 (虽然是在希沃白板上打的)
+                if(average < 100 || average2 < 80 || variance < 60 || range < 20) {
+                    message += '你个入机; ';
+                }
+                else if(average < 200 || average2 < 180 || variance < 250 || range < 50) {
+                    message += '如果你是用鼠标做的, 那么你是个入机; 否则你是个人类';
                 }
                 else {
                     message += '你看起来像个人类';
