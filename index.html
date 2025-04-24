@@ -12,13 +12,12 @@
                 display: flex;
                 flex-direction: column;
                 align-items: center;
-                user-select: none;
             }
 
             .container {
                 margin: 10px;
                 width: 80%;
-                max-width: 800px;
+                max-width: 1000px;
                 padding: 5px 25px 25px;
                 background-color: #fff;
                 box-shadow: 0 0 10px rgba(0,0,0,0.1);
@@ -26,7 +25,7 @@
                 transition: transform 0.3s;
             }
             .container:hover {
-                transform: scale(1.02);
+                /* transform: scale(1.02); */   /* 经实测, 这个效果很影响操作, 故取消 */
                 box-shadow: 0 0 15px rgba(0,0,0,0.2);
             }
 
@@ -51,31 +50,56 @@
             }
 
             .messageBox {
-                width: 80%;
+                width: 90%;
                 border: 2px solid #333;
                 padding: 5px 20px;
                 border-radius: 5px;
+                min-height: 50px;
+                font-size: 16px;
+            }
+
+            .no-select {
+                user-select: none;
             }
         </style>
     </head>
     <body>
         <div class="container">
             <h1>入机验证</h1>
-            <p>
-                请从左到右依次点击每个按钮以进行验证, 点击 
-                <button onclick="reset()" style="width: 60px;">此处</button> 
-                以重置。
-            </p>
-            <p id="buttons"></p>
+            <div class="no-select">
+                <p>
+                    请从左到右依次点击每个按钮以进行验证, 点击 
+                    <button onclick="reset()" style="width: 60px;">此处</button> 
+                    以重置.
+                </p>
+                <p id="buttons"></p>
+            </div>
+            
             <p>消息: </p>
             <div class="messageBox">
                 <p id="message">这是一条默认消息</p>
             </div>
+            <br/><hr/>
+            <p>以下为开发中的功能, 仍有 bug, 将就着用吧:</p>
+            <p>
+                点击 
+                <button onclick="encode()" style="width: 60px;">此处</button> 
+                以文本形式导出结果.
+            </p>
+            <div class="messageBox">
+                <p id="export">以文本形式导出的结果将在此处出现</p>
+            </div>
+            <p>
+                点击 
+                <button onclick="decode()" style="width: 60px;">此处</button> 
+                以文本形式导入结果 (请先在下方输入文本形式的结果, 点击"此处"后结果将出现在消息栏).
+            </p>
+            <input type="text" id="import" class="messageBox" placeholder="请在这里输入文本形式的结果"><br/>
         </div>
         <script>
             const N = 16;
-            let clickTime = new Array(N), lastClick = 0, interval = new Array(N - 1), average = 0, average2 = 0, variance = 0, maxIvl = 0, minIvl = 5000, range, message;
-            for(let i = 1; i <= 16; i++) {
+            let clickTime = new Array(N), lastClick = 0, interval = new Array(N - 1), average = 0, average2 = 0, variance = 0, maxIvl = 0, minIvl = 2147483647, range, message;
+            for(let i = 1; i <= N; i++) {
                 document.getElementById('buttons').innerHTML += '<button id="button' + i + '" onclick="handle(' + i + ')">' + String(i).padStart(2, '0') + '</button>\n';
             }
             function reset() {
@@ -84,11 +108,6 @@
                     document.getElementById('button' + String(i + 1)).disabled = false;
                 }
                 lastClick = 0;
-                average = 0;
-                average2 = 0;
-                variance = 0;
-                maxIvl = 0;
-                minIvl = 5000;
             }
             function handle(index) {
                 // console.log('click(', index, ')');
@@ -107,6 +126,11 @@
                 }
             }
             function getResult() {
+                average = 0;
+                average2 = 0;
+                variance = 0;
+                maxIvl = 0;
+                minIvl = 2147483647;
                 for(let i = 0; i < N - 1; i++) {
                     interval[i] = clickTime[i + 1] - clickTime[i];
                     average += interval[i];
@@ -120,10 +144,6 @@
                     variance += (interval[i] - average) * (interval[i] - average);
                 }
                 variance = Math.floor(variance / (N - 1));
-                // console.log('Time Intervals:', interval);
-                // console.log('Average of Intervals:', average);
-                // console.log('Variance of Intervals:', variance);
-                // console.log('Range of Intervals:', range);
                 message =
                 '间隔时长(ms): ' + interval +
                 ';<br/>间隔时长的平均值(ms): ' + average +
@@ -132,10 +152,10 @@
                 ';<br/>去掉极值后的平均值(ms): ' + average2 +
                 ';<br/>验证结果: ';
                 //作者本人测试的 average 最低 294, varience 最低 657, range 最低 88
-                //但是某 chm 打出了 average=260, varience=270, range=56 的成绩
-                //但是某 zmh 打出了 average=114, varience=61, range=23 的成绩 (虽然是在希沃白板上打的)
-                if(average < 100 || average2 < 80 || variance < 60 || range < 20) {
-                    message += '你个入机; ';
+                //但是学长 chm 曾打出 average=260, varience=270, range=56 的成绩
+                //我们班同学 (其中 zmh 和 zmz 表现最为突出) 打出的最好成绩分别是 average=96, varience=40, range=21, average2=91 (虽然是在希沃白板上打的, 而且不是同一次的)
+                if(average < 90 || average2 < 80 || variance < 35 || range < 20) {
+                    message += '你个入机';
                 }
                 else if(average < 200 || average2 < 180 || variance < 250 || range < 50) {
                     message += '如果你是用鼠标做的, 那么你是个入机; 否则你是个人类';
@@ -157,6 +177,31 @@
                 let minutes = String(date.getMinutes()).padStart(2, '0');
                 let seconds = String(date.getSeconds()).padStart(2, '0');
                 return year + '.' + month + '.' + day + ' ' + hours + ':' + minutes + ':' + seconds;
+            }
+            function encode() {
+                let result = '';
+                for(let i = 0; i < N; i++) {
+                    result += String(clickTime[i]) + ' ';
+                }
+                document.getElementById('export').innerHTML = btoa(result);
+            }
+            function decode() {
+                let result = atob(document.getElementById('import').value);
+                let arr = result.split(' ');
+                if(arr.length < N) {
+                    showMessage('导入的结果格式不正确, 请检查并重新导入!');
+                    return;
+                }
+                for(let i = 0; i < N; i++) {
+                    if(isNaN(Number(arr[i]))) {
+                        showMessage('导入的结果格式不正确, 请检查并重新导入!');
+                        return;
+                    }
+                }
+                for(let i = 0; i < N; i++) {
+                    clickTime[i] = Number(arr[i]);
+                }
+                getResult();
             }
         </script>
     </body>
